@@ -1,0 +1,85 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iav_sharedcommondataserviceforapps_1ce31"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_outlook": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iav_sharedoutlook_42d2c"
+        },
+        "api": {
+          "name": "shared_outlook"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "Cuando_se_agrega,_modifica_o_elimina_una_fila": {
+          "metadata": {
+            "operationMetadataId": "bea91aab-a614-409b-9421-39aa30d09d6f"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "iav_usuariotfg",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Enviar_correo_electrónico_(V2)": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "bc3c8715-de3a-4bbe-8f36-a093ab1bd092"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_outlook",
+              "operationId": "SendEmailV2",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_outlook"
+            },
+            "parameters": {
+              "emailMessage/To": "@triggerOutputs()?['body/iav_correoelectronico']",
+              "emailMessage/Subject": "REGISTRO COMPLETADO EN PC TECHNOLOGY!",
+              "emailMessage/Body": "<p>Te has registrado correctamente en PC Technology, @{triggerOutputs()?['body/iav_name']}. Bienvenido!</p>",
+              "emailMessage/Importance": "Normal"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

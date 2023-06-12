@@ -1,0 +1,107 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iav_sharedcommondataserviceforapps_1ce31"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_outlook": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "iav_sharedoutlook_42d2c"
+        },
+        "api": {
+          "name": "shared_outlook"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "Cuando_se_agrega,_modifica_o_elimina_una_fila": {
+          "metadata": {
+            "operationMetadataId": "0aa687e9-68ee-49de-a816-20f669fa179c"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "iav_pedido",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Agregar_una_fila_nueva": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "cd2928a9-4668-4fc7-9532-cce53d9e0bcf"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "CreateRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "iav_facturas",
+              "item/iav_comprador": "@triggerOutputs()?['body/iav_comprador']",
+              "item/iav_importetotal": "@triggerOutputs()?['body/iav_coste']",
+              "item/iav_producto": "@triggerOutputs()?['body/iav_producto']",
+              "item/iav_fechadeemision": "@triggerOutputs()?['body/createdon']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Enviar_correo_electrónico_(V2)": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "17d394f8-0923-469e-94c5-867ebc1606ca"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_outlook",
+              "operationId": "SendEmailV2",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_outlook"
+            },
+            "parameters": {
+              "emailMessage/To": "@triggerOutputs()?['body/iav_mail']",
+              "emailMessage/Subject": "PEDIDO COMPLETADO EN PC TECHNOLOGY!",
+              "emailMessage/Body": "<p>@{triggerOutputs()?['body/iav_comprador']} tu pedido nº: @{triggerOutputs()?['body/iav_name']} referido a @{triggerOutputs()?['body/iav_producto']} con el coste de @{triggerOutputs()?['body/iav_coste']}€ se ha completado correctamente!</p>",
+              "emailMessage/Importance": "Normal"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}
